@@ -198,6 +198,13 @@ jobs:
         run: |
           kubectl wait --for=condition=ready pod -l app=postgres -n tiko --timeout=5m
           kubectl wait --for=condition=ready pod -l app=keycloak -n tiko --timeout=5m
-          kubectl wait --for=condition=complete job/keycloak-bootstrap -n tiko --timeout=5m
+          kubectl wait --for=condition=complete job/keycloak-bootstrap -n tiko --timeout=12m
           kubectl wait --for=condition=available deployment --all -n tiko --timeout=8m
           kubectl get pods,services,ingress -n tiko
+      - name: Dump Kind bootstrap diagnostics
+        if: always()
+        run: |
+          kubectl get job/keycloak-bootstrap -n tiko -o yaml || true
+          kubectl describe job/keycloak-bootstrap -n tiko || true
+          kubectl get pods -n tiko -l app=keycloak-bootstrap -o wide || true
+          kubectl logs job/keycloak-bootstrap -n tiko --all-containers=true --ignore-errors=true || true
