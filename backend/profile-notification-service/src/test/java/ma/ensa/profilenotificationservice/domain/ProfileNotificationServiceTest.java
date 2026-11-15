@@ -27,8 +27,8 @@ class ProfileNotificationServiceTest {
     private PreferencesRepository preferences;
     private NotificationRepository notifications;
     private ProfileNotificationService service;
-    private final CurrentUser client = new CurrentUser("client-1", "client", Set.of());
-    private final CurrentUser agent = new CurrentUser("agent-1", "agent", Set.of(CurrentUser.AGENT));
+    private final CurrentUser client = new CurrentUser("client-1", "client", null, Set.of());
+    private final CurrentUser agent = new CurrentUser("agent-1", "agent", "tenant-a", Set.of(CurrentUser.AGENT));
 
     @BeforeEach
     void setUp() {
