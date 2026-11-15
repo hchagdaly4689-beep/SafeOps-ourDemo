@@ -24,6 +24,7 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
     static final String SUBJECT = "X-Auth-Subject";
     static final String USERNAME = "X-Auth-Username";
     static final String ROLES = "X-Auth-Roles";
+    static final String TENANT = "X-Auth-Tenant";
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -38,12 +39,13 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "no authenticated caller");
         }
         String username = request.getHeader(USERNAME);
+        String tenantId = request.getHeader(TENANT);
         String roles = request.getHeader(ROLES);
         // realm roles arrive plain, client roles as "client:role" - only realm roles matter here
         Set<String> realmRoles = roles == null ? Set.of() : Arrays.stream(roles.split(","))
                 .map(String::trim)
                 .filter(role -> !role.isEmpty() && !role.contains(":"))
                 .collect(Collectors.toUnmodifiableSet());
-        return new CurrentUser(subject, username == null ? subject : username, realmRoles);
+        return new CurrentUser(subject, username == null ? subject : username, tenantId, realmRoles);
     }
 }

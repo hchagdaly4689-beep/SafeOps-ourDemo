@@ -23,7 +23,7 @@ class AppointmentServiceTest {
 
     private AppointmentRepository appointments;
     private AppointmentService service;
-    private final CurrentUser owner = new CurrentUser("client-1", "client", Set.of());
+    private final CurrentUser owner = new CurrentUser("client-1", "client", null, Set.of());
 
     @BeforeEach
     void setUp() {
