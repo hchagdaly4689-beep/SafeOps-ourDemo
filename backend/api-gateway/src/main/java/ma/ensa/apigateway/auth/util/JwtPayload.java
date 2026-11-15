@@ -27,6 +27,7 @@ public record JwtPayload(
         String name,
         String preferred_username,
         String email,
+        String tenant_id,
         // roles, the whole point of the token for a gateway.
         RealmAccess realm_access,
         Map<String, ResourceAccess> resource_access

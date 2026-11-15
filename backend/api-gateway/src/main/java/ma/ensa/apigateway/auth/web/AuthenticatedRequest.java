@@ -28,10 +28,11 @@ public class AuthenticatedRequest extends HttpServletRequestWrapper {
     public static final String EMAIL = "X-Auth-Email";
     public static final String CLIENT = "X-Auth-Client";
     public static final String ROLES = "X-Auth-Roles";
+    public static final String TENANT = "X-Auth-Tenant";
 
     private static final Set<String> MANAGED = Set.of(
             SUBJECT.toLowerCase(), USERNAME.toLowerCase(), EMAIL.toLowerCase(),
-            CLIENT.toLowerCase(), ROLES.toLowerCase());
+            CLIENT.toLowerCase(), ROLES.toLowerCase(), TENANT.toLowerCase());
 
     private final Map<String, String> identity;
 
@@ -50,6 +51,7 @@ public class AuthenticatedRequest extends HttpServletRequestWrapper {
         put(headers, EMAIL, user.email());
         put(headers, CLIENT, user.clientId());
         put(headers, ROLES, String.join(",", user.authorities()));
+        put(headers, TENANT, user.tenantId());
         return headers;
     }
 
