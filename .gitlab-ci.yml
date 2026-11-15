@@ -186,8 +186,13 @@ kind-smoke:
         --from-literal=APPOINTMENTS_DB_USER=appointments --from-literal=APPOINTMENTS_DB_PASSWORD=appointments-ci-password \
         --from-literal=PROFILES_DB_USER=profile_notifications --from-literal=PROFILES_DB_PASSWORD=profiles-ci-password \
         --from-literal=KC_ADMIN=admin --from-literal=KC_ADMIN_PASSWORD=keycloak-ci-password \
-        --from-literal=TIKO_CLIENT_PASSWORD=client-ci-password --from-literal=TIKO_AGENT_PASSWORD=agent-ci-password \
-        --from-literal=TIKO_ADMIN_PASSWORD=admin-ci-password --from-literal=PROVIDER_CLIENT_ID=tiko-backend \
+        --from-literal=TIKO_CLIENT_PASSWORD=client-ci-password \
+        --from-literal=TIKO_TENANT_A_AGENT_PASSWORD=tenant-a-agent-ci-password \
+        --from-literal=TIKO_TENANT_A_ADMIN_PASSWORD=tenant-a-admin-ci-password \
+        --from-literal=TIKO_TENANT_B_AGENT_PASSWORD=tenant-b-agent-ci-password \
+        --from-literal=TIKO_TENANT_B_ADMIN_PASSWORD=tenant-b-admin-ci-password \
+        --from-literal=TIKO_PROVIDER_ADMIN_PASSWORD=provider-admin-ci-password \
+        --from-literal=PROVIDER_CLIENT_ID=tiko-backend \
         --from-literal=PROVIDER_CLIENT_SECRET=gw-ci-client-secret
       sed -i '/  - secret.yaml/d' k8s/kustomization.yaml
       kubectl apply -k k8s/

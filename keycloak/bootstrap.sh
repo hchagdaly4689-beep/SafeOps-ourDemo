@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Brings Keycloak to the state the Tiko stack expects, from nothing, every time.
 #
-#   realm "tiko"           registration on, realm roles client / agent / admin, "client" by default
+#   realm "tiko"           registration on, realm roles client / agent / tenant-admin / provider-admin
 #   client "frontend"      public, Authorization Code + PKCE (S256) only - used by keycloak-js
 #   client "tiko-backend"  confidential, service account - the api-gateway's own client
 #   audience "tiko-api"    added to both clients' access tokens; the gateway requires it
-#   users                  client / agent / admin test accounts (passwords from .env)
+#   users                  global client, two tenant staff pairs, and provider-admin test accounts
 #
 # Then it reads tiko-backend's generated secret back from Keycloak and writes it to
 # $OUT_DIR/gateway.properties, which the gateway loads through spring.config.import.
@@ -86,19 +86,37 @@ ensure_audience_mapper() {
   log "audience mapper added to $client_id"
 }
 
+ensure_tenant_mapper() {
+  local client_id="$1" id
+  id=$(client_uuid "$client_id")
+  if kc get "clients/$id/protocol-mappers/models" -r "$REALM" --fields name --format csv --noquotes \
+       | tr -d '\r' | grep -qx "user-tenant-id"; then
+    return
+  fi
+  kc create "clients/$id/protocol-mappers/models" -r "$REALM" \
+    -s "name=user-tenant-id" -s protocol=openid-connect -s protocolMapper=oidc-usermodel-attribute-mapper \
+    -s 'config."user.attribute"=tenant_id' -s 'config."claim.name"=tenant_id' \
+    -s 'config."jsonType.label"=String' -s 'config."access.token.claim"=true' \
+    -s 'config."id.token.claim"=false' -s 'config."userinfo.token.claim"=false' >/dev/null
+  log "tenant_id mapper added to $client_id"
+}
+
 ensure_role() {
   kc get "roles/$1" -r "$REALM" >/dev/null 2>&1 \
     || { kc create roles -r "$REALM" -s "name=$1" -s "description=$2" >/dev/null; log "role $1 created"; }
 }
 
-# ensure_user username password email first last role
+ # ensure_user username password email first last role [tenant_id]
 ensure_user() {
-  local username="$1" password="$2" email="$3" first="$4" last="$5" role="$6" id
+  local username="$1" password="$2" email="$3" first="$4" last="$5" role="$6" tenant_id="${7:-}" id
   id=$(kc get users -r "$REALM" -q "username=$username" -q exact=true --fields id --format csv --noquotes | head -n1 | tr -d '\r')
   if [ -z "$id" ]; then
     kc create users -r "$REALM" -s "username=$username" -s enabled=true -s "email=$email" \
       -s emailVerified=true -s "firstName=$first" -s "lastName=$last" >/dev/null
     log "user $username created"
+  fi
+  if [ -n "$tenant_id" ]; then
+    kc update "users/$id" -r "$REALM" -s "attributes.tenant_id=$tenant_id"
   fi
   kc set-password -r "$REALM" --username "$username" --new-password "$password"
   kc add-roles -r "$REALM" --uusername "$username" --rolename "$role"
@@ -116,7 +134,8 @@ kc update "realms/$REALM" \
 
 ensure_role client "Visitor taking tickets"
 ensure_role agent  "Counter agent of an establishment"
-ensure_role admin  "Establishment administrator"
+ensure_role tenant-admin "Tenant administrator"
+ensure_role provider-admin "Tiko SaaS provider administrator"
 # self-registered users are clients
 kc add-roles -r "$REALM" --rname "default-roles-$REALM" --rolename client
 
@@ -166,12 +185,17 @@ fi
 
 ensure_audience_mapper frontend
 ensure_audience_mapper "$BACKEND_CLIENT_ID"
+ensure_tenant_mapper frontend
 
 # ------------------------------------------------------------------ test users
-ensure_user client "$TIKO_CLIENT_PASSWORD" client@tiko.test Sara   Benali client
-ensure_user agent  "$TIKO_AGENT_PASSWORD"  agent@tiko.test  Mehdi  Karim  agent
-ensure_user admin  "$TIKO_ADMIN_PASSWORD"  admin@tiko.test  Lina   Berrada admin
-kc add-roles -r "$REALM" --uusername admin --rolename agent
+ensure_user client   "$TIKO_CLIENT_PASSWORD"                 client@tiko.test       Sara    Benali  client
+ensure_user agent-a  "$TIKO_TENANT_A_AGENT_PASSWORD"         agent-a@tiko.test      Mehdi   Karim   agent         tenant-a
+ensure_user admin-a  "$TIKO_TENANT_A_ADMIN_PASSWORD"         admin-a@tiko.test      Lina    Berrada tenant-admin  tenant-a
+ensure_user agent-b  "$TIKO_TENANT_B_AGENT_PASSWORD"         agent-b@tiko.test      Omar    Tahiri  agent         tenant-b
+ensure_user admin-b  "$TIKO_TENANT_B_ADMIN_PASSWORD"         admin-b@tiko.test      Nadia   Alaoui  tenant-admin  tenant-b
+ensure_user provider-admin "$TIKO_PROVIDER_ADMIN_PASSWORD"   provider-admin@tiko.test Samir  Amrani  provider-admin
+kc add-roles -r "$REALM" --uusername admin-a --rolename agent
+kc add-roles -r "$REALM" --uusername admin-b --rolename agent
 
 # ------------------------------------------------------------------ secret hand-off
 BACKEND_UUID=$(client_uuid "$BACKEND_CLIENT_ID")

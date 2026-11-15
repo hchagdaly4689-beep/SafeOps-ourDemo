@@ -49,16 +49,31 @@ spec:
                 secretKeyRef:
                   name: tiko-secrets
                   key: TIKO_CLIENT_PASSWORD
-            - name: TIKO_AGENT_PASSWORD
+            - name: TIKO_TENANT_A_AGENT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: tiko-secrets
-                  key: TIKO_AGENT_PASSWORD
-            - name: TIKO_ADMIN_PASSWORD
+                  key: TIKO_TENANT_A_AGENT_PASSWORD
+            - name: TIKO_TENANT_A_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: tiko-secrets
-                  key: TIKO_ADMIN_PASSWORD
+                  key: TIKO_TENANT_A_ADMIN_PASSWORD
+            - name: TIKO_TENANT_B_AGENT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tiko-secrets
+                  key: TIKO_TENANT_B_AGENT_PASSWORD
+            - name: TIKO_TENANT_B_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tiko-secrets
+                  key: TIKO_TENANT_B_ADMIN_PASSWORD
+            - name: TIKO_PROVIDER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tiko-secrets
+                  key: TIKO_PROVIDER_ADMIN_PASSWORD
           volumeMounts:
             - name: bootstrap
               mountPath: /bootstrap
