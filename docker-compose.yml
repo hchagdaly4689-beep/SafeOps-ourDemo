@@ -53,7 +53,7 @@ services:
       TIKO_TENANT_B_ADMIN_PASSWORD: ${TIKO_TENANT_B_ADMIN_PASSWORD}
       TIKO_PROVIDER_ADMIN_PASSWORD: ${TIKO_PROVIDER_ADMIN_PASSWORD}
     volumes:
-      - ./keycloak/bootstrap.sh:/bootstrap.sh:ro
+      - ./k8s/keycloak-bootstrap.sh:/bootstrap.sh:ro
       - gateway-secrets:/bootstrap
     tmpfs:
       - /tmp
